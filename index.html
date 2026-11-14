@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0f14">
+<title>Maratón 6h</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#0b0f14;--card:#151b23;--line:#263140;--tx:#e8eef5;--mu:#8a97a8;--walk:#38bdf8;--jog:#fb923c;--ok:#4ade80;--ac:#a3e635;--bad:#f87171}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px}
+body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+h1{font-size:22px;margin:0 0 2px}h2{font-size:17px;margin:0 0 8px}
+p{margin:6px 0;line-height:1.45}
+.mu{color:var(--mu)}.sm{font-size:13px}.num{font-variant-numeric:tabular-nums}
+main{padding:16px;max-width:560px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+.row{display:flex;gap:10px;align-items:center}.grow{flex:1;min-width:0}
+button,.btn{font:inherit;color:var(--tx);background:#1f2937;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+button:active,.btn:active{transform:scale(.98)}
+.pri{background:var(--ac);color:#0b0f14;border-color:var(--ac);font-weight:800;font-size:19px;padding:16px;width:100%}
+.wide{width:100%}.dan{border-color:var(--bad);color:var(--bad)}
+.spo{background:#1db954;border-color:#1db954;color:#04130a;font-weight:700}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:#0e141b;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{flex:1;border:0;border-radius:0;background:none;padding:10px 0 12px;color:var(--mu);font-size:12px}
+nav button b{display:block;font-size:20px;font-weight:400}
+nav button.on{color:var(--ac)}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mu)}
+.bar{height:8px;background:#1f2937;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:8px 0}
+details.cur{border-color:var(--ac)}
+summary{padding:12px 14px;cursor:pointer;list-style:none;display:flex;gap:8px;align-items:center}
+summary::-webkit-details-marker{display:none}
+.ses{display:flex;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.chk{width:34px;height:34px;padding:0;border-radius:50%;flex:none;font-size:16px}
+.chk.on{background:var(--ok);border-color:var(--ok);color:#0b0f14}
+.go{flex:none;padding:8px 12px;color:var(--ac)}
+label{display:block;margin:10px 0 4px;color:var(--mu);font-size:13px}
+input,select{font:inherit;width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0e141b;color:var(--tx)}
+input[type=checkbox]{width:22px;height:22px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.st{background:rgba(0,0,0,.28);border-radius:12px;padding:10px 12px}
+.st span{display:block;color:var(--mu);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.st b{font-size:26px;font-variant-numeric:tabular-nums}
+#wk{position:fixed;inset:0;z-index:20;background:var(--bg);display:none;flex-direction:column;padding:14px;padding-top:calc(14px + env(safe-area-inset-top));overflow:auto}
+#wk.w{background:linear-gradient(#082f49,#0b0f14 60%)}#wk.j{background:linear-gradient(#5a2408,#0b0f14 60%)}
+#segName{font-size:44px;font-weight:900;letter-spacing:.02em;text-align:center;margin-top:6px}
+#wk.w #segName{color:var(--walk)}#wk.j #segName{color:var(--jog)}
+#segTime{font-size:92px;font-weight:800;text-align:center;line-height:1;font-variant-numeric:tabular-nums}
+#coach{text-align:center;font-size:21px;font-weight:700;min-height:30px;margin:8px 0}
+#coach.fast{color:var(--bad)}#coach.slow{color:var(--walk)}#coach.ok{color:var(--ok)}
+#lock{position:fixed;inset:0;z-index:30;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.15);padding:30px;touch-action:none}
+#lock div{background:#000c;border:1px solid var(--line);padding:14px 18px;border-radius:14px;text-align:center}
+#modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.7);display:none;align-items:flex-end}
+#modal>div{background:var(--card);width:100%;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+svg.rt{width:100%;height:170px;background:#0e141b;border-radius:12px}
+#map{height:260px;border-radius:12px;overflow:hidden;background:#0e141b}
+.feel button{flex:1;padding:12px 4px;font-size:14px}
+ul{padding-left:20px;margin:6px 0}li{margin:5px 0;line-height:1.4}
+</style>
+</head>
+<body>
+<main id="view"></main>
+<nav>
+  <button data-t="hoy"><b>🏃</b>Hoy</button>
+  <button data-t="plan"><b>📅</b>Plan</button>
+  <button data-t="hist"><b>📈</b>Historial</button>
+  <button data-t="cfg"><b>⚙️</b>Ajustes</button>
+</nav>
+
+<section id="wk">
+  <div class="row"><div class="grow"><b id="wkTitle"></b><div class="sm mu" id="gps">GPS: buscando…</div></div>
+    <button id="bLock">🔒 Bloquear</button></div>
+  <div id="segName">—</div>
+  <div id="segTime">0:00</div>
+  <div class="sm mu" style="text-align:center" id="segNext"></div>
+  <div class="bar" style="margin:10px 0"><i id="prog" style="width:0"></i></div>
+  <div id="coach"></div>
+  <div class="grid">
+    <div class="st"><span>Tiempo</span><b id="sT">0:00</b></div>
+    <div class="st"><span>Distancia km</span><b id="sD">0,00</b></div>
+    <div class="st"><span>Ritmo actual</span><b id="sP">--</b></div>
+    <div class="st"><span>Ritmo medio</span><b id="sA">--</b></div>
+    <div class="st"><span>Kcal (estim.)</span><b id="sK">0</b></div>
+    <div class="st"><span>Objetivo</span><b id="sG" style="font-size:19px">--</b></div>
+  </div>
+  <div id="live" style="margin:10px 0"></div>
+  <div class="row" style="margin-top:auto">
+    <button class="grow" id="bPause">⏸ Pausa</button>
+    <a class="btn spo" id="bSpo" target="_blank" rel="noopener">♫ Spotify</a>
+    <button class="dan" id="bEnd">⏹ Terminar</button>
+  </div>
+</section>
+<div id="lock"><div><b>Pantalla bloqueada</b><br><span class="sm mu">Mantén pulsado 2 segundos para desbloquear</span></div></div>
+<div id="modal"><div id="modalIn"></div></div>
+
+<script>
+//PLAN-START
+var PLAN_WEEKS=42;
+var P1=[[5,1,5],[4,1,6],[4,2,5],[4,1,6],[3,2,6],[3,3,5],[2,3,6],[3,2,6],[2,4,5],[2,5,5],[2,6,4],[2,4,5]]; // andar, trote, repeticiones
+var LONG={13:60,14:70,15:80,16:60,17:85,18:95,19:110,20:80,21:120,22:130,23:140,24:100,25:150,26:160,27:170,28:120,29:180,30:195,31:210,32:140,33:220,34:150,35:235,36:150,37:210,38:150,39:255,40:150,41:80};
+function merge(a){var o=[];a.forEach(function(s){var l=o[o.length-1];if(l&&l.t===s.t)l.s+=s.s;else o.push({t:s.t,s:s.s})});return o}
+function iv(warm,j,w,n,cool){var a=[{t:'w',s:warm*60}];for(var i=0;i<n;i++){a.push({t:'j',s:j*60});a.push({t:'w',s:w*60})}a.push({t:'w',s:cool*60});return merge(a)}
+function mk(title,warm,j,w,n,cool,note){return {title:title,segs:iv(warm,j,w,n,cool),desc:warm+"' andar · "+n+" × ("+j+"' trote + "+w+"' andar) · "+cool+"' andar",note:note||''}}
+function phase(n){return n<=12?1:n<=24?2:n<=32?3:n<=39?4:5}
+var PHASES=['','Andar-trotar','Base','Construcción','Pico','Afinado'];
+function targets(n,off){off=off||0;var t=n<=12?{j:[510,585],w:[600,720]}:n<=24?{j:[480,555],w:[585,690]}:{j:[450,505],w:[570,660]};
+  return {j:[t.j[0]+off,t.j[1]+off],w:[t.w[0]+off,t.w[1]+off]}}
+function longRatio(n){return n<17?[2,2]:n<21?[3,2]:n<25?[2,1]:[3,1]}
+function weekPlan(n){
+  var F="Después: 15' de fuerza en casa (sentadillas, zancadas, puente de glúteo, gemelos, plancha).";
+  if(n<=12){var p=P1[n-1],s=function(){return mk('Andar-trotar',5,p[1],p[0],p[2],5)};
+    var m=n<=8?45:55;
+    return [s(),s(),(function(){var x=s();x.note=F;return x})(),{title:'Caminata rápida',segs:[{t:'w',s:m*60}],desc:m+"' andando a paso vivo, sin trotar",note:'Bajo impacto: quema grasa sin castigar articulaciones.'}]}
+  var r=longRatio(n);
+  if(n===PLAN_WEEKS){var race=[];for(var i=0;i<98;i++){race.push({t:'j',s:180});race.push({t:'w',s:60})}
+    return [mk('Suave',5,3,1,5,5),mk('Activación',5,3,1,3,3),{title:'Paseo y descanso',segs:[{t:'w',s:1200}],desc:"20' andando suave",note:'Duerme bien, hidrátate, nada nuevo.'},
+      {title:'MARATÓN',segs:race,desc:"3' trote + 1' andar desde el primer kilómetro, hasta meta",note:'No salgas más rápido que en los entrenos largos. La app marca hasta 6 h 30 (cierre de meta).'}]}
+  var b=n<17?0:n<21?1:n<25?2:n<33?3:4;
+  var A=[[5,2,4],[6,2,4],[8,2,3],[10,2,3],[15,2,2]][b],c=n===41?10:[8,10,12,14,15][b];
+  var k=Math.round(20/(r[0]+r[1])),L=LONG[n],ln=Math.round((L-10)/(r[0]+r[1]));
+  var lg=mk('Tirada larga',5,r[0],r[1],ln,5,L>90?'Lleva agua y 30–60 g de hidratos por hora. Ritmo de conversación.':'Ritmo de conversación.');
+  return [mk('Rodaje suave',5,A[0],A[1],A[2],3),
+    {title:'Bloques continuos',segs:merge([{t:'w',s:300},{t:'j',s:c*60},{t:'w',s:180},{t:'j',s:c*60},{t:'w',s:300}]),desc:"5' andar · "+c+"' trote · 3' andar · "+c+"' trote · 5' andar",note:''},
+    mk('Suave + fuerza',5,r[0],r[1],k,5,F),lg]}
+function sesMin(s){return Math.round(s.segs.reduce(function(a,x){return a+x.s},0)/60)}
+function sesKm(s,n){var t=targets(n),mj=(t.j[0]+t.j[1])/2,mw=(t.w[0]+t.w[1])/2;return s.segs.reduce(function(a,x){return a+x.s/(x.t==='j'?mj:mw)},0)}
+//PLAN-END
+
+const $=s=>document.querySelector(s);
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}};
+let cfg=Object.assign({start:'2026-11-16',race:'2027-09-04',kg:82,off:0,voice:true,vib:true,spotify:''},LS.get('run_cfg',{}));
+let done=LS.get('run_done',{}),hist=LS.get('run_hist',[]),weights=LS.get('run_w',[]);
+let tab='hoy';
+const DAY=864e5;
+const pd=s=>{const a=s.split('-').map(Number);return new Date(a[0],a[1]-1,a[2])};
+const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())};
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const dm=d=>d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+const days=(a,b)=>Math.round((b-a)/DAY);
+function curWeek(){const n=Math.floor(days(pd(cfg.start),today())/7)+1;return Math.max(1,Math.min(PLAN_WEEKS,n))}
+function margin(){const last=new Date(pd(cfg.start).getTime()+(PLAN_WEEKS-1)*7*DAY);return Math.floor(days(last,pd(cfg.race))/7)}
+const mmss=s=>{s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=String(s%60).padStart(2,'0');return h?h+':'+String(m).padStart(2,'0')+':'+x:m+':'+x};
+const pace=p=>(!p||p>1800)?'--':Math.floor(p/60)+':'+String(Math.round(p%60)).padStart(2,'0');
+const km=m=>(m/1000).toFixed(2).replace('.',',');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function spoUrl(){return /^https:\/\/open\.spotify\.com\//.test(cfg.spotify)?cfg.spotify:'https://open.spotify.com/'}
+function hav(a,b,c,d){const R=6371000,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+function routeSvg(pts){
+  if(!pts||pts.length<2)return '<div class="sm mu" style="text-align:center;padding:14px">Sin trazado GPS</div>';
+  let a=1e9,b=-1e9,c=1e9,d=-1e9;pts.forEach(p=>{a=Math.min(a,p[0]);b=Math.max(b,p[0]);c=Math.min(c,p[1]);d=Math.max(d,p[1])});
+  const k=Math.cos((a+b)/2*Math.PI/180),w=Math.max((d-c)*k,1e-5),h=Math.max(b-a,1e-5),W=300,H=170,s=Math.min((W-20)/w,(H-20)/h);
+  const X=p=>((p[1]-c)*k*s+(W-w*s)/2).toFixed(1),Y=p=>(H-((p[0]-a)*s+(H-h*s)/2)).toFixed(1);
+  const f=pts[0],l=pts[pts.length-1];
+  return '<svg class="rt" viewBox="0 0 '+W+' '+H+'"><polyline fill="none" stroke="#a3e635" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+pts.map(p=>X(p)+','+Y(p)).join(' ')+'"/><circle cx="'+X(f)+'" cy="'+Y(f)+'" r="5" fill="#4ade80"/><circle cx="'+X(l)+'" cy="'+Y(l)+'" r="5" fill="#f87171"/></svg>';
+}
+
+/* ---------- voz, pitidos ---------- */
+let actx=null;
+function beep(f,ms){try{if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;g.gain.value=.25;o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+ms/1000)}catch(e){}}
+function say(t){if(!cfg.voice||!('speechSynthesis' in window))return;try{const u=new SpeechSynthesisUtterance(t);u.lang='es-ES';u.rate=1.05;speechSynthesis.speak(u)}catch(e){}}
+function sayDur(s){const m=Math.floor(s/60),r=s%60,a=[];if(m)a.push(m+(m===1?' minuto':' minutos'));if(r)a.push(r+' segundos');return a.join(' y ')}
+function sayPace(p){return Math.floor(p/60)+' minutos '+Math.round(p%60)+' por kilómetro'}
+
+/* ---------- entrenamiento en curso ---------- */
+let A=null,R=null,wake=null;
+const elapsed=()=>((A.pausedAt||Date.now())-A.startTs-A.pausedTotal)/1000;
+function begin(sess,key,wk){
+  if(A)return;
+  const segs=sess?sess.segs:[];let t=0;
+  A={key:key,wk:wk,title:sess?sess.title:'Sesión libre',segs:segs,ends:segs.map(s=>t+=s.s),free:!sess,startTs:Date.now(),pausedTotal:0,pausedAt:null,dist:0,kcal:0,pts:[],lastEl:0,segIdx:-1,kmSaid:0};
+  say('Empezamos.');run();
+}
+function run(){
+  R={last:null,win:[],lastFix:0,acc:null,coachT:A.lastEl,coachState:'',beep:-1,save:0,pace:null,lastPt:A.pts.length?A.pts[A.pts.length-1]:null,endTap:0};
+  A.tg=targets(A.wk,cfg.off);
+  $('#wk').style.display='flex';$('#wkTitle').textContent=A.title;$('#bSpo').href=spoUrl();
+  if(navigator.geolocation)R.watch=navigator.geolocation.watchPosition(onPos,e=>{$('#gps').textContent='GPS: '+(e.code===1?'permiso denegado':'sin señal')},{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
+  else $('#gps').textContent='GPS no disponible';
+  lockWake();R.timer=setInterval(tick,500);tick();
+}
+async function lockWake(){try{if('wakeLock' in navigator)wake=await navigator.wakeLock.request('screen')}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(A&&R&&document.visibilityState==='visible')lockWake()});
+function onPos(p){
+  if(!A||!R)return;const c=p.coords,t=Date.now();R.acc=c.accuracy;
+  $('#gps').textContent='GPS: ±'+Math.round(c.accuracy)+' m'+(c.accuracy>35?' (señal débil)':'');
+  if(c.accuracy>35)return;R.lastFix=t;
+  if(A.pausedAt){R.last=null;return}
+  const la=c.latitude,lo=c.longitude;
+  if(!R.last){R.last={la,lo,t}}
+  else{const d=hav(R.last.la,R.last.lo,la,lo),dt=Math.max((t-R.last.t)/1000,1);
+    if(d>=4){if(d/dt<=6.5)A.dist+=d;R.last={la,lo,t}}}
+  if(!R.lastPt||hav(R.lastPt[0],R.lastPt[1],la,lo)>=10){R.lastPt=[+la.toFixed(5),+lo.toFixed(5)];A.pts.push(R.lastPt)}
+  R.win.push({t:t,d:A.dist});while(R.win.length&&t-R.win[0].t>40000)R.win.shift();
+}
+function curPace(){
+  const now=Date.now();if(now-R.lastFix>12000)return null;
+  const w=R.win.filter(x=>now-x.t<=25000);if(w.length<2)return null;
+  const a=w[0],b=w[w.length-1],dt=(b.t-a.t)/1000,dd=b.d-a.d;
+  if(dt<8)return null;return dd<4?3600:dt/dd*1000;
+}
+function tick(){
+  if(!A||!R)return;
+  const el=elapsed(),dt=Math.max(0,el-A.lastEl);A.lastEl=el;
+  let i=0;
+  if(!A.free){i=A.ends.findIndex(e=>el<e);if(i<0){finish(true);return}}
+  const type=A.free?'j':A.segs[i].t,p=A.pausedAt?null:curPace();R.pace=p;
+  if(!A.pausedAt){
+    const v=p?60000/p:(type==='j'?120:92),runF=A.free?v>110:type==='j';
+    A.kcal+=(3.5+(runF?.2:.1)*v)*cfg.kg/200*dt/60;
+    if(i!==A.segIdx){A.segIdx=i;R.coachT=el;R.coachState='';
+      if(!A.free){const s=A.segs[i];say((s.t==='j'?'Trota ':'Camina ')+sayDur(Math.round(A.ends[i]-el)));beep(s.t==='j'?880:520,350);if(cfg.vib&&navigator.vibrate)navigator.vibrate(s.t==='j'?[300,100,300]:[500])}}
+    if(!A.free){const rem=Math.ceil(A.ends[i]-el);if(rem<=3&&rem>0&&rem!==R.beep){R.beep=rem;beep(660,120)}}
+    const k=Math.floor(A.dist/1000);if(k>A.kmSaid){A.kmSaid=k;say('Kilómetro '+k+'. Ritmo medio '+sayPace(el/(A.dist/1000)))}
+    coach(el,type,p,A.free?0:(i?A.ends[i-1]:0));
+    if(el-R.save>10){R.save=el;persist()}
+  }
+  const w=$('#wk');w.className=A.pausedAt?'':type;
+  $('#segName').textContent=A.pausedAt?'PAUSA':A.free?'LIBRE':type==='j'?'TROTA':'CAMINA';
+  $('#segTime').textContent=mmss(A.free?el:A.ends[i]-el);
+  const nx=A.free?null:A.segs[i+1];
+  $('#segNext').textContent=A.free?'':nx?'Luego: '+(nx.t==='j'?'trota ':'camina ')+mmss(nx.s)+' · tramo '+(i+1)+'/'+A.segs.length:'Último tramo';
+  $('#prog').style.width=A.free?'0':(el/A.ends[A.ends.length-1]*100).toFixed(1)+'%';
+  $('#sT').textContent=mmss(el);$('#sD').textContent=km(A.dist);$('#sP').textContent=pace(p);
+  $('#sA').textContent=A.dist>50?pace(el/(A.dist/1000)):'--';$('#sK').textContent=Math.round(A.kcal);
+  $('#sG').textContent=pace(A.tg[type][0])+'–'+pace(A.tg[type][1]);
+  if(Math.round(el*2)%20===0)$('#live').innerHTML=A.pts.length>1?routeSvg(A.pts):'';
+}
+function coach(el,type,p,segStart){
+  const c=$('#coach');
+  if(!p){c.className='';c.textContent=Date.now()-R.lastFix>12000?'Sin GPS: sigo marcando los tiempos':'';return}
+  const tg=A.tg[type];let st=p<tg[0]?'fast':p>tg[1]?'slow':'ok';
+  if(type==='w'&&st==='fast')st='ok';
+  const msg=type==='j'?{fast:'Afloja, vas demasiado rápido',slow:'Aprieta un poco',ok:'Aguanta este ritmo'}[st]:{slow:'Aprieta el paso',ok:'Buen paso, aguanta'}[st];
+  c.className=st;c.textContent=msg;
+  if(el-segStart<20)return;
+  const need=st!==R.coachState?20:st==='ok'?150:45;
+  if(el-R.coachT>=need){R.coachT=el;R.coachState=st;say(msg)}
+}
+function persist(){const c=Object.assign({},A);delete c.tg;LS.set('run_active',c)}
+function stopAll(){if(R){clearInterval(R.timer);if(R.watch!=null)navigator.geolocation.clearWatch(R.watch)}if(wake){try{wake.release()}catch(e){}wake=null}$('#wk').style.display='none';$('#lock').style.display='none'}
+function finish(auto){
+  const total=A.free?0:A.ends[A.ends.length-1],el=auto?total:elapsed();
+  stopAll();say(auto?'Sesión completada. Buen trabajo.':'Sesión terminada.');
+  let pts=A.pts;if(pts.length>600){const st=pts.length/600;pts=Array.from({length:600},(_,i)=>pts[Math.floor(i*st)])}
+  const e={id:Date.now(),date:iso(new Date()),key:A.key,title:A.title,dur:Math.round(el),dist:Math.round(A.dist),kcal:Math.round(A.kcal),pts:pts,feel:''};
+  const full=A.key!=='libre'&&(auto||el>=total*.8);
+  if(el>=60){hist.unshift(e);if(!LS.set('run_hist',hist)){hist.forEach((h,i)=>{if(i>30)h.pts=[]});LS.set('run_hist',hist)}}
+  if(full){done[A.key]=1;LS.set('run_done',done)}
+  localStorage.removeItem('run_active');A=null;R=null;render();
+  if(el>=60)summary(e,full);
+}
+function summary(e,full){
+  modal('<h2>'+esc(e.title)+(full?' ✅':'')+'</h2>'+statsHtml(e)+routeSvg(e.pts)+
+   '<p class="mu sm" style="margin-top:12px">¿Cómo ha ido?</p><div class="row feel"><button data-f="Fácil">😀 Fácil</button><button data-f="Bien">🙂 Bien</button><button data-f="Duro">😓 Duro</button><button data-f="Dolor">🤕 Dolor</button></div><div id="feelMsg" class="sm"></div><button class="wide" style="margin-top:12px" onclick="closeModal()">Cerrar</button>');
+  document.querySelectorAll('.feel button').forEach(b=>b.onclick=()=>{e.feel=b.dataset.f;LS.set('run_hist',hist);
+    $('#feelMsg').innerHTML='<p>'+({Fácil:'Bien. No subas el ritmo: sigue el plan, la progresión ya está calculada.',Bien:'Justo donde hay que estar.',Duro:'Si la anterior también fue dura, repite esta semana (Ajustes → Repetir semana) antes de avanzar.',Dolor:'<b>Para.</b> 2–3 días sin trotar (andar sí, si no duele). Si es un dolor punzante, localizado o te cambia la pisada, fisio antes de seguir. Después, repite la semana.'}[e.feel])+'</p>'});
+}
+function statsHtml(e){return '<div class="grid" style="margin:10px 0"><div class="st"><span>Tiempo</span><b>'+mmss(e.dur)+'</b></div><div class="st"><span>Distancia km</span><b>'+km(e.dist)+'</b></div><div class="st"><span>Ritmo medio</span><b>'+(e.dist>50?pace(e.dur/(e.dist/1000)):'--')+'</b></div><div class="st"><span>Kcal (estim.)</span><b>'+e.kcal+'</b></div></div>'}
+
+$('#bPause').onclick=()=>{if(!A)return;if(A.pausedAt){A.pausedTotal+=Date.now()-A.pausedAt;A.pausedAt=null;R.last=null;R.win=[];$('#bPause').textContent='⏸ Pausa';say('Seguimos')}else{A.pausedAt=Date.now();$('#bPause').textContent='▶ Seguir';say('Pausa')}persist();tick()};
+$('#bEnd').onclick=()=>{if(!A)return;const n=Date.now();if(n-R.endTap<3000){$('#bEnd').textContent='⏹ Terminar';finish(false)}else{R.endTap=n;$('#bEnd').textContent='¿Seguro? Pulsa otra vez';setTimeout(()=>{$('#bEnd').textContent='⏹ Terminar'},3000)}};
+$('#bLock').onclick=()=>{$('#lock').style.display='flex'};
+(function(){let t=null;const l=$('#lock');const dn=e=>{e.preventDefault();t=setTimeout(()=>{l.style.display='none'},2000)},up=()=>clearTimeout(t);
+  l.addEventListener('touchstart',dn,{passive:false});l.addEventListener('touchend',up);l.addEventListener('mousedown',dn);l.addEventListener('mouseup',up)})();
+
+/* ---------- modal ---------- */
+function modal(h){$('#modalIn').innerHTML=h;$('#modal').style.display='flex'}
+function closeModal(){$('#modal').style.display='none';$('#modalIn').innerHTML=''}
+$('#modal').onclick=e=>{if(e.target.id==='modal')closeModal()};
+
+/* ---------- vistas ---------- */
+function nextSession(n){const w=weekPlan(n);for(let i=0;i<4;i++)if(!done['w'+n+'s'+i])return {i:i,s:w[i]};return null}
+function sesLine(s,n){return sesMin(s)+' min · ≈ '+sesKm(s,n).toFixed(1).replace('.',',')+' km'}
+function vHoy(){
+  const n=curWeek(),st=pd(cfg.start),pre=days(today(),st),nx=nextSession(n),dn=[0,1,2,3].filter(i=>done['w'+n+'s'+i]).length,m=margin(),t=targets(n,cfg.off);
+  let h='<h1>Semana '+n+' de '+PLAN_WEEKS+'</h1><div class="mu sm">Fase '+phase(n)+': '+PHASES[phase(n)]+' · faltan '+Math.max(0,days(today(),pd(cfg.race)))+' días para la maratón</div>';
+  if(A)h+='<div class="card" style="border-color:var(--jog)"><b>Tienes una sesión a medias</b> ('+esc(A.title)+', '+mmss(A.lastEl)+')<div class="row" style="margin-top:10px"><button class="grow" id="bRes">Reanudar</button><button class="dan" id="bDis">Descartar</button></div></div>';
+  if(pre>0)h+='<div class="card">El plan empieza el <b>'+dm(st)+'</b> (en '+pre+' días). Puedes adelantar la fecha en Ajustes o empezar ya.</div>';
+  h+='<div class="card"><div class="row"><div class="grow"><span class="tag">Esta semana: '+dn+'/4</span></div></div><div class="bar" style="margin:10px 0"><i style="width:'+dn*25+'%"></i></div>';
+  if(nx)h+='<h2 style="margin-top:12px">'+esc(nx.s.title)+'</h2><p>'+nx.s.desc+'</p><p class="mu sm">'+sesLine(nx.s,n)+(nx.s.note?'<br>'+nx.s.note:'')+'</p><p class="sm">Ritmo objetivo — trote <b class="num">'+pace(t.j[0])+'–'+pace(t.j[1])+'</b> · andar <b class="num">'+pace(t.w[0])+'–'+pace(t.w[1])+'</b> min/km</p><button class="pri" id="bGo">EMPEZAR</button>';
+  else h+='<p><b>Semana completada.</b> Si te apetece más, haz una sesión libre suave o una caminata. No adelantes sesiones de la semana siguiente.</p>';
+  h+='</div><div class="row"><button class="grow" id="bFree">Sesión libre</button><a class="btn spo grow" target="_blank" rel="noopener" href="'+esc(spoUrl())+'">♫ Abrir Spotify</a></div>';
+  h+='<div class="card sm '+(m<0?'':'mu')+'"'+(m<0?' style="border-color:var(--bad)"':'')+'>'+(m<0?'<b>El plan termina '+(-m)+' semana(s) después de la maratón.</b> Revisa las fechas en Ajustes.':(m===0?'<b>Sin semanas de margen:</b> el plan termina justo en la semana de la maratón. Si pierdes una semana, sigue donde toca; no intentes recuperarla doblando sesiones.':'Margen: <b>'+m+' semana(s)</b> entre el final del plan y la maratón, para repetir semanas duras o parones.')+(n>=35&&m>0?' <b>Úsalas ahora</b> (Ajustes → Repetir semana) para que la tirada más larga caiga 3 semanas antes de la carrera.':''))+'</div>';
+  $('#view').innerHTML=h;
+  if(nx)$('#bGo').onclick=()=>begin(nx.s,'w'+n+'s'+nx.i,n);
+  $('#bFree').onclick=()=>begin(null,'libre',n);
+  if(A){$('#bRes').onclick=()=>{$('#bPause').textContent=A.pausedAt?'▶ Seguir':'⏸ Pausa';run()};$('#bDis').onclick=()=>{localStorage.removeItem('run_active');A=null;render()}}
+}
+function vPlan(){
+  const cur=curWeek(),st=pd(cfg.start);
+  let h='<h1>Plan de '+PLAN_WEEKS+' semanas</h1><div class="mu sm">4 sesiones por semana. Toca ○ para marcar una sesión hecha sin el móvil, ▶ para hacerla.</div>'+
+  '<details><summary><b class="grow">Reglas del plan (léelas una vez)</b>▾</summary><div style="padding:0 14px 12px" class="sm"><ul>'+
+  '<li><b>Ritmo de conversación siempre.</b> Si no puedes decir una frase entera trotando, vas rápido. Ir despacio es lo que quema grasa y evita lesiones.</li>'+
+  '<li><b>Reparto:</b> 3 sesiones de 30–45 min + 1 larga. Deja un día de descanso antes de la larga. Nunca 3 días seguidos de trote.</li>'+
+  '<li><b>Semana dura = se repite.</b> Dolor punzante o que te cambia la pisada = parar.</li>'+
+  '<li><b>Fuerza 2 días/semana, 15 min:</b> sentadilla, zancada, puente de glúteo, elevación de gemelos, plancha. Es lo que más protege rodillas y tendones.</li>'+
+  '<li><b>Grasa:</b> la decide la alimentación, no los kilómetros. Déficit moderado (0,25–0,5 kg/semana); más rápido se paga en lesiones y fatiga. Proteína en cada comida. No recortes el día de la tirada larga.</li>'+
+  '<li><b>Tiradas de más de 90 min:</b> agua y 30–60 g de hidratos por hora. Ensaya ahí lo que tomarás en carrera.</li>'+
+  '<li><b>Estrategia de carrera:</b> 3\' trote + 1\' andar desde el km 1. A 7:45 trotando y 10:15 andando salen ≈ 5 h 50.</li></ul></div></details>';
+  let ph=0;
+  for(let n=1;n<=PLAN_WEEKS;n++){
+    if(phase(n)!==ph){ph=phase(n);h+='<h2 style="margin:18px 0 4px">Fase '+ph+' · '+PHASES[ph]+'</h2>'}
+    const w=weekPlan(n),a=new Date(st.getTime()+(n-1)*7*DAY),dn=[0,1,2,3].filter(i=>done['w'+n+'s'+i]).length;
+    h+='<details'+(n===cur?' open class="cur"':'')+'><summary><b>S'+n+'</b><span class="grow mu sm">'+dm(a)+' · larga '+sesMin(w[3])+'\'</span><span class="tag">'+dn+'/4</span></summary>';
+    w.forEach((s,i)=>{const k='w'+n+'s'+i;h+='<div class="ses"><button class="chk'+(done[k]?' on':'')+'" data-k="'+k+'">'+(done[k]?'✓':'○')+'</button><div class="grow"><b>'+esc(s.title)+'</b><div class="sm mu">'+s.desc+'<br>'+sesLine(s,n)+'</div></div><button class="go" data-n="'+n+'" data-i="'+i+'">▶</button></div>'});
+    h+='</details>';
+  }
+  $('#view').innerHTML=h;
+  document.querySelectorAll('.chk').forEach(b=>b.onclick=()=>{const k=b.dataset.k;if(done[k])delete done[k];else done[k]=1;LS.set('run_done',done);b.classList.toggle('on');b.textContent=done[k]?'✓':'○'});
+  document.querySelectorAll('.go').forEach(b=>b.onclick=()=>{const n=+b.dataset.n,i=+b.dataset.i;begin(weekPlan(n)[i],'w'+n+'s'+i,n)});
+  const c=document.querySelector('details.cur');if(c)c.scrollIntoView({block:'center'});
+}
+function vHist(){
+  const tk=hist.reduce((a,e)=>a+e.dist,0),tt=hist.reduce((a,e)=>a+e.dur,0),tc=hist.reduce((a,e)=>a+e.kcal,0);
+  let h='<h1>Historial</h1><div class="grid" style="margin:12px 0"><div class="st"><span>Sesiones</span><b>'+hist.length+'</b></div><div class="st"><span>Km totales</span><b>'+(tk/1000).toFixed(1).replace('.',',')+'</b></div><div class="st"><span>Horas</span><b>'+(tt/3600).toFixed(1).replace('.',',')+'</b></div><div class="st"><span>Kcal (estim.)</span><b>'+tc+'</b></div></div>';
+  if(!hist.length)h+='<p class="mu">Todavía no hay sesiones.</p>';
+  hist.forEach(e=>{h+='<div class="card row" data-id="'+e.id+'" style="cursor:pointer"><div class="grow"><b>'+esc(e.title)+'</b> <span class="mu sm">'+dm(pd(e.date))+(e.feel?' · '+e.feel:'')+'</span><div class="sm mu num">'+mmss(e.dur)+' · '+km(e.dist)+' km · '+(e.dist>50?pace(e.dur/(e.dist/1000))+' /km · ':'')+e.kcal+' kcal</div></div>›</div>'});
+  $('#view').innerHTML=h;
+  document.querySelectorAll('[data-id]').forEach(c=>c.onclick=()=>detail(hist.find(e=>e.id==c.dataset.id)));
+}
+function detail(e){
+  modal('<h2>'+esc(e.title)+' · '+dm(pd(e.date))+'</h2>'+statsHtml(e)+'<div id="map">'+routeSvg(e.pts)+'</div><div class="row" style="margin-top:12px"><button class="grow" onclick="closeModal()">Cerrar</button><button class="dan" id="bDel">Borrar</button></div>');
+  let tap=0;$('#bDel').onclick=()=>{if(Date.now()-tap<3000){hist=hist.filter(x=>x.id!==e.id);LS.set('run_hist',hist);closeModal();render()}else{tap=Date.now();$('#bDel').textContent='¿Seguro?'}};
+  if(navigator.onLine&&e.pts.length>1)leaflet().then(()=>{const el=$('#map');if(!el)return;el.innerHTML='';const m=L.map(el,{attributionControl:true});L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(m);const p=L.polyline(e.pts,{color:'#65a30d',weight:5}).addTo(m);m.fitBounds(p.getBounds(),{padding:[16,16]})}).catch(()=>{});
+}
+let lfP=null;
+function leaflet(){if(window.L)return Promise.resolve();if(lfP)return lfP;lfP=new Promise((ok,ko)=>{const c=document.createElement('link');c.rel='stylesheet';c.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(c);const s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.onload=ok;s.onerror=()=>{lfP=null;ko()};document.head.appendChild(s)});return lfP}
+function vCfg(){
+  const end=new Date(pd(cfg.start).getTime()+(PLAN_WEEKS*7-1)*DAY);
+  let wl='';if(weights.length){const f=weights[0],l=weights[weights.length-1],d=l.kg-f.kg;wl='<p class="sm">Inicio '+f.kg+' kg ('+dm(pd(f.d))+') → ahora <b>'+l.kg+' kg</b> ('+(d>0?'+':'')+d.toFixed(1).replace('.',',')+' kg)</p><div class="sm mu">'+weights.slice(-6).reverse().map(w=>dm(pd(w.d))+': '+w.kg+' kg').join(' · ')+'</div>'}
+  $('#view').innerHTML='<h1>Ajustes</h1>'+
+  '<div class="card"><h2>Plan</h2><label>Inicio del plan (lunes de la semana 1)</label><input type="date" id="cStart" value="'+cfg.start+'"><label>Fecha de la maratón</label><input type="date" id="cRace" value="'+cfg.race+'"><p class="sm mu">El plan termina el '+dm(end)+'. Margen: '+margin()+' semana(s).</p><button class="wide" id="bRep">Repetir semana (retrasa el plan 7 días)</button></div>'+
+  '<div class="card"><h2>Peso</h2><label>Peso actual (kg) — se usa para las calorías</label><div class="row"><input type="number" step="0.1" inputmode="decimal" id="cKg" value="'+cfg.kg+'"><button id="bKg">Registrar</button></div>'+wl+'</div>'+
+  '<div class="card"><h2>Ritmo y avisos</h2><label>Ajuste de ritmo objetivo (segundos por km; positivo = más lento)</label><input type="number" step="5" id="cOff" value="'+cfg.off+'"><div class="row" style="margin-top:12px"><input type="checkbox" id="cVoice"'+(cfg.voice?' checked':'')+'><span class="grow">Avisos de voz</span><button id="bTest">Probar voz</button></div><div class="row" style="margin-top:12px"><input type="checkbox" id="cVib"'+(cfg.vib?' checked':'')+'><span class="grow">Vibración en cada cambio</span></div></div>'+
+  '<div class="card"><h2>Spotify</h2><label>Enlace de tu playlist (Spotify → Compartir → Copiar enlace)</label><input type="url" id="cSpo" placeholder="https://open.spotify.com/playlist/…" value="'+esc(cfg.spotify)+'"><p class="sm mu">La música suena en la app de Spotify; los avisos de voz suenan por encima.</p></div>'+
+  '<div class="card"><h2>Copia de seguridad</h2><p class="sm mu">Los datos solo están en este móvil. Exporta de vez en cuando.</p><div class="row"><button class="grow" id="bExp">Exportar</button><button class="grow" id="bImp">Importar</button></div><input type="file" id="fImp" accept="application/json" style="display:none"></div>'+
+  '<p class="sm mu" style="text-align:center">v1.1 · Mantén la pantalla encendida durante la sesión: con la pantalla apagada el navegador corta el GPS.</p>';
+  const sv=()=>{LS.set('run_cfg',cfg)};
+  $('#cStart').onchange=e=>{if(e.target.value){cfg.start=e.target.value;sv();render()}};
+  $('#cRace').onchange=e=>{if(e.target.value){cfg.race=e.target.value;sv();render()}};
+  $('#cOff').onchange=e=>{cfg.off=Math.max(-120,Math.min(240,+e.target.value||0));sv()};
+  $('#cVoice').onchange=e=>{cfg.voice=e.target.checked;sv()};$('#cVib').onchange=e=>{cfg.vib=e.target.checked;sv()};
+  $('#cSpo').onchange=e=>{cfg.spotify=e.target.value.trim();sv()};
+  $('#bTest').onclick=()=>{beep(880,300);say('Trota un minuto. Aguanta este ritmo.')};
+  $('#bRep').onclick=()=>{cfg.start=iso(new Date(pd(cfg.start).getTime()+7*DAY));sv();render()};
+  $('#bKg').onclick=()=>{const k=+$('#cKg').value;if(k>30&&k<250){cfg.kg=k;sv();const d=iso(today());weights=weights.filter(w=>w.d!==d);weights.push({d:d,kg:k});LS.set('run_w',weights);render()}};
+  $('#bExp').onclick=()=>{const b=new Blob([JSON.stringify({cfg,done,hist,weights})],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='maraton-copia-'+iso(today())+'.json';a.click()};
+  $('#bImp').onclick=()=>$('#fImp').click();
+  $('#fImp').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{const d=JSON.parse(t);if(d.cfg){cfg=Object.assign(cfg,d.cfg);done=d.done||{};hist=d.hist||[];weights=d.weights||[];LS.set('run_cfg',cfg);LS.set('run_done',done);LS.set('run_hist',hist);LS.set('run_w',weights);render()}}).catch(()=>{})};
+}
+function render(){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));({hoy:vHoy,plan:vPlan,hist:vHist,cfg:vCfg})[tab]();if(tab!=='plan')window.scrollTo(0,0)}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+
+/* ---------- arranque ---------- */
+(function(){const a=LS.get('run_active',null);if(a&&a.startTs&&Date.now()-a.startTs<8*3600e3)A=a;else localStorage.removeItem('run_active')})();
+render();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
