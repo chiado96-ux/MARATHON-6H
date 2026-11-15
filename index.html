@@ -126,6 +126,13 @@ function weekPlan(n){
   return [mk('Rodaje suave',5,A[0],A[1],A[2],3),
     {title:'Bloques continuos',segs:merge([{t:'w',s:300},{t:'j',s:c*60},{t:'w',s:180},{t:'j',s:c*60},{t:'w',s:300}]),desc:"5' andar · "+c+"' trote · 3' andar · "+c+"' trote · 5' andar",note:''},
     mk('Suave + fuerza',5,r[0],r[1],k,5,F),lg]}
+function extraSession(n){
+  var N='No avanza el plan. Paseo a tu aire: aquí no se corrige el paso al andar.';
+  if(n<=4)return {title:'Extra suave',segs:[{t:'w',s:2400}],desc:"40' andando, sin trotar",note:N+' En estos bloques el trote extra no aporta y sí carga.'};
+  if(n<=12)return {title:'Extra suave',segs:merge([{t:'w',s:540},{t:'j',s:60},{t:'w',s:540},{t:'j',s:60},{t:'w',s:540},{t:'j',s:60},{t:'w',s:600}]),desc:"40' andando con 3 trotes de 1' muy suaves (uno cada 10')",note:N};
+  if(n<=24)return {title:'Extra suave',segs:iv(5,2,5,5,0),desc:"5' andar · 5 × (2' trote + 5' andar)",note:N};
+  if(n<=39)return {title:'Extra suave',segs:iv(5,3,4,5,0),desc:"5' andar · 5 × (3' trote + 4' andar)",note:N};
+  return {title:'Extra suave',segs:[{t:'w',s:1800}],desc:"30' andando, sin trotar",note:N+' Estás afinando: descansar suma más que entrenar.'}}
 function sesMin(s){return Math.round(s.segs.reduce(function(a,x){return a+x.s},0)/60)}
 function sesKm(s,n){var t=targets(n),mj=(t.j[0]+t.j[1])/2,mw=(t.w[0]+t.w[1])/2;return s.segs.reduce(function(a,x){return a+x.s/(x.t==='j'?mj:mw)},0)}
 //PLAN-END
@@ -231,6 +238,7 @@ function tick(){
 function coach(el,type,p,segStart){
   const c=$('#coach');
   if(!p){c.className='';c.textContent=Date.now()-R.lastFix>12000?'Sin GPS: sigo marcando los tiempos':'';return}
+  if(type==='w'&&A.key==='extra'){c.className='';c.textContent='';return}
   const tg=A.tg[type];let st=p<tg[0]?'fast':p>tg[1]?'slow':'ok';
   if(type==='w'&&st==='fast')st='ok';
   const msg=type==='j'?{fast:'Afloja, vas demasiado rápido',slow:'Aprieta un poco',ok:'Aguanta este ritmo'}[st]:{slow:'Aprieta el paso',ok:'Buen paso, aguanta'}[st];
@@ -246,7 +254,7 @@ function finish(auto){
   stopAll();say(auto?'Sesión completada. Buen trabajo.':'Sesión terminada.');
   let pts=A.pts;if(pts.length>600){const st=pts.length/600;pts=Array.from({length:600},(_,i)=>pts[Math.floor(i*st)])}
   const e={id:Date.now(),date:iso(new Date()),key:A.key,title:A.title,dur:Math.round(el),dist:Math.round(A.dist),kcal:Math.round(A.kcal),pts:pts,feel:''};
-  const full=A.key!=='libre'&&(auto||el>=total*.8);
+  const full=/^w\d/.test(A.key)&&(auto||el>=total*.8);
   if(el>=60){hist.unshift(e);if(!LS.set('run_hist',hist)){hist.forEach((h,i)=>{if(i>30)h.pts=[]});LS.set('run_hist',hist)}}
   if(full){done[A.key]=1;LS.set('run_done',done)}
   localStorage.removeItem('run_active');A=null;R=null;render();
@@ -279,13 +287,13 @@ function vHoy(){
   const dn=[0,1,2,3].filter(i=>done['w'+n+'s'+i]).length;
   let h='<h1>Bloque '+n+' de '+PLAN_WEEKS+'</h1><div class="mu sm">Fase '+phase(n)+': '+PHASES[phase(n)]+' · sesión '+Math.min(dc+1,tot)+' de '+tot+' · faltan '+dr+' días para la maratón</div>';
   if(A)h+='<div class="card" style="border-color:var(--jog)"><b>Tienes una sesión a medias</b> ('+esc(A.title)+', '+mmss(A.lastEl)+')<div class="row" style="margin-top:10px"><button class="grow" id="bRes">Reanudar</button><button class="dan" id="bDis">Descartar</button></div></div>';
-  const w7=hist.filter(e=>e.key!=='libre'&&days(pd(e.date),today())<7).length,ll=hist.find(e=>/s3$/.test(e.key));
+  const in7=e=>days(pd(e.date),today())<7,w7=hist.filter(e=>/^w\d/.test(e.key)&&in7(e)).length,x7=hist.filter(e=>e.key==='extra'&&in7(e)).length,ex=extraSession(n),ll=hist.find(e=>/s3$/.test(e.key));
   if(w7>=5)h+='<div class="card sm" style="border-color:var(--bad)"><b>Llevas '+w7+' sesiones del plan en 7 días.</b> Cuentan, pero tendones y articulaciones se adaptan más despacio que el fondo: mete un día de descanso antes de la siguiente.</div>';
   if(nx&&nx.i===3&&n>12&&ll&&days(pd(ll.date),today())<5)h+='<div class="card sm" style="border-color:var(--bad)"><b>Tu última tirada larga fue hace menos de 5 días.</b> Espera antes de hacer esta.</div>';
   h+='<div class="card"><div class="row"><span class="tag">Este bloque: '+dn+'/4</span><span class="tag">Plan: '+Math.round(dc/tot*100)+'%</span></div><div class="bar" style="margin:10px 0"><i style="width:'+(dc/tot*100).toFixed(1)+'%"></i></div>';
   if(nx)h+='<h2 style="margin-top:12px">'+esc(nx.s.title)+'</h2><p>'+nx.s.desc+'</p><p class="mu sm">'+sesLine(nx.s,n)+(nx.s.note?'<br>'+nx.s.note:'')+'</p><p class="sm">Ritmo objetivo — trote <b class="num">'+pace(t.j[0])+'–'+pace(t.j[1])+'</b> · andar <b class="num">'+pace(t.w[0])+'–'+pace(t.w[1])+'</b> min/km</p><button class="pri" id="bGo">EMPEZAR</button>';
   else h+='<p><b>Plan completado.</b></p>';
-  h+='</div><div class="row"><button class="grow" id="bFree">Sesión libre (no avanza el plan)</button><a class="btn spo grow" target="_blank" rel="noopener" href="'+esc(spoUrl())+'">♫ Abrir Spotify</a></div>';
+  h+='</div><div class="card"><div class="row"><h2 class="grow" style="margin:0">Sesión extra (opcional)</h2><span class="tag">Últimos 7 días: '+x7+'/2</span></div><p>'+ex.desc+'</p><p class="mu sm">'+sesLine(ex,n)+'<br>'+ex.note+'</p>'+(x7>=2||w7+x7>=6?'<p class="sm" style="color:var(--bad)"><b>'+(w7+x7>=6?'Llevas '+(w7+x7)+' sesiones en 7 días: hoy toca descanso (el paseo normal con el perro sí).':'Ya llevas 2 extras en 7 días: la tercera no ayuda, carga.')+'</b></p>':'')+'<button class="wide" id="bExtra">Hacer sesión extra</button></div><div class="row"><button class="grow" id="bFree">Sesión libre</button><a class="btn spo grow" target="_blank" rel="noopener" href="'+esc(spoUrl())+'">♫ Abrir Spotify</a></div>';
   if(rem&&dr){const need=rem/(dr/7),end=new Date(today().getTime()+Math.ceil(rem/4*7)*DAY),late=need>4.3;
     h+='<div class="card sm '+(late?'':'mu')+'"'+(late?' style="border-color:var(--bad)"':'')+'>Quedan <b>'+rem+' sesiones</b>. Para llegar a la maratón necesitas <b>'+need.toFixed(1).replace('.',',')+' por semana</b>; a 4 por semana terminarías el '+dm(end)+'.'+
     (late?' <b>Vas justo.</b> No lo arregles haciendo 6 por semana: si no llegas, sáltate sesiones cortas, nunca las tiradas largas.':'')+
@@ -293,6 +301,7 @@ function vHoy(){
   $('#view').innerHTML=h;
   if(nx)$('#bGo').onclick=()=>begin(nx.s,'w'+n+'s'+nx.i,n);
   $('#bFree').onclick=()=>begin(null,'libre',n);
+  $('#bExtra').onclick=()=>begin(ex,'extra',n);
   if(A){$('#bRes').onclick=()=>{$('#bPause').textContent=A.pausedAt?'▶ Seguir':'⏸ Pausa';run()};$('#bDis').onclick=()=>{localStorage.removeItem('run_active');A=null;render()}}
 }
 function vPlan(){
@@ -300,7 +309,7 @@ function vPlan(){
   let h='<h1>Plan: '+PLAN_WEEKS+' bloques · '+PLAN_WEEKS*4+' sesiones</h1><div class="mu sm">Avanzas sesión a sesión, a tu ritmo: cada sesión hecha cuenta, sea el día que sea. Toca ○ para marcar una hecha sin el móvil (o desmarcarla para repetirla), ▶ para hacerla.</div>'+
   '<details><summary><b class="grow">Reglas del plan (léelas una vez)</b>▾</summary><div style="padding:0 14px 12px" class="sm"><ul>'+
   '<li><b>Ritmo de conversación siempre.</b> Si no puedes decir una frase entera trotando, vas rápido. Ir despacio es lo que quema grasa y evita lesiones.</li>'+
-  '<li><b>Cada bloque:</b> 3 sesiones de 30–45 min + 1 larga. El plan está calculado para 4 por semana. Si haces 5, cuenta y avanzas antes; más de 5 en 7 días no: el fondo mejora rápido, los tendones no.</li><li><b>Descanso:</b> al menos 1 día libre por semana, uno antes de cada tirada larga y 5 días o más entre dos largas.</li>'+
+  '<li><b>Cada bloque:</b> 3 sesiones de 30–45 min + 1 larga. El plan está calculado para 4 por semana. Si haces 5, cuenta y avanzas antes; más de 5 en 7 días no: el fondo mejora rápido, los tendones no.</li><li><b>Días extra:</b> usa la «Sesión extra» de la pantalla de inicio (se adapta a tu bloque, casi todo andando). Máximo 2 por semana y nunca el día antes de la tirada larga si lleva trote.</li><li><b>Descanso:</b> al menos 1 día libre por semana, uno antes de cada tirada larga y 5 días o más entre dos largas.</li>'+
   '<li><b>Bloque duro = se repite</b> (desmarca sus sesiones). Dolor punzante o que te cambia la pisada = parar.</li>'+
   '<li><b>Fuerza 2 días/semana, 15 min:</b> sentadilla, zancada, puente de glúteo, elevación de gemelos, plancha. Es lo que más protege rodillas y tendones.</li>'+
   '<li><b>Grasa:</b> la decide la alimentación, no los kilómetros. Déficit moderado (0,25–0,5 kg/semana); más rápido se paga en lesiones y fatiga. Proteína en cada comida. No recortes el día de la tirada larga.</li>'+
@@ -342,7 +351,7 @@ function vCfg(){
   '<div class="card"><h2>Ritmo y avisos</h2><label>Ajuste de ritmo objetivo (segundos por km; positivo = más lento)</label><input type="number" step="5" id="cOff" value="'+cfg.off+'"><div class="row" style="margin-top:12px"><input type="checkbox" id="cVoice"'+(cfg.voice?' checked':'')+'><span class="grow">Avisos de voz</span><button id="bTest">Probar voz</button></div><div class="row" style="margin-top:12px"><input type="checkbox" id="cVib"'+(cfg.vib?' checked':'')+'><span class="grow">Vibración en cada cambio</span></div></div>'+
   '<div class="card"><h2>Spotify</h2><label>Enlace de tu playlist (Spotify → Compartir → Copiar enlace)</label><input type="url" id="cSpo" placeholder="https://open.spotify.com/playlist/…" value="'+esc(cfg.spotify)+'"><p class="sm mu">La música suena en la app de Spotify; los avisos de voz suenan por encima.</p></div>'+
   '<div class="card"><h2>Copia de seguridad</h2><p class="sm mu">Los datos solo están en este móvil. Exporta de vez en cuando.</p><div class="row"><button class="grow" id="bExp">Exportar</button><button class="grow" id="bImp">Importar</button></div><input type="file" id="fImp" accept="application/json" style="display:none"></div>'+
-  '<p class="sm mu" style="text-align:center">v1.2 · Mantén la pantalla encendida durante la sesión: con la pantalla apagada el navegador corta el GPS.</p>';
+  '<p class="sm mu" style="text-align:center">v1.3 · Mantén la pantalla encendida durante la sesión: con la pantalla apagada el navegador corta el GPS.</p>';
   const sv=()=>{LS.set('run_cfg',cfg)};
   $('#cRace').onchange=e=>{if(e.target.value){cfg.race=e.target.value;sv();render()}};
   $('#cOff').onchange=e=>{cfg.off=Math.max(-120,Math.min(240,+e.target.value||0));sv()};
