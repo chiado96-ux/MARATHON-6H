@@ -177,7 +177,7 @@ const elapsed=()=>((A.pausedAt||Date.now())-A.startTs-A.pausedTotal)/1000;
 function begin(sess,key,wk){
   if(A)return;
   const segs=sess?sess.segs:[];let t=0;
-  A={key:key,wk:wk,title:sess?sess.title:'Sesión libre',segs:segs,ends:segs.map(s=>t+=s.s),free:!sess,startTs:Date.now(),pausedTotal:0,pausedAt:null,dist:0,kcal:0,pts:[],lastEl:0,segIdx:-1,kmSaid:0};
+  A={key:key,wk:wk,title:sess?sess.title:'Sesión libre',segs:segs,ends:segs.map(s=>t+=s.s),free:!sess,startTs:Date.now(),pausedTotal:0,pausedAt:null,dist:0,kcal:0,pts:[],lastEl:0,segIdx:-1,kmSaid:0,sd:segs.map(()=>0)};
   say('Empezamos.');run();
 }
 function run(){
@@ -198,7 +198,7 @@ function onPos(p){
   const la=c.latitude,lo=c.longitude;
   if(!R.last){R.last={la,lo,t}}
   else{const d=hav(R.last.la,R.last.lo,la,lo),dt=Math.max((t-R.last.t)/1000,1);
-    if(d>=4){if(d/dt<=6.5)A.dist+=d;R.last={la,lo,t}}}
+    if(d>=4){if(d/dt<=6.5){A.dist+=d;if(A.sd&&A.segIdx>=0&&A.segIdx<A.sd.length)A.sd[A.segIdx]+=d}R.last={la,lo,t}}}
   if(!R.lastPt||hav(R.lastPt[0],R.lastPt[1],la,lo)>=10){R.lastPt=[+la.toFixed(5),+lo.toFixed(5)];A.pts.push(R.lastPt)}
   R.win.push({t:t,d:A.dist});while(R.win.length&&t-R.win[0].t>40000)R.win.shift();
 }
@@ -253,7 +253,7 @@ function finish(auto){
   const total=A.free?0:A.ends[A.ends.length-1],el=auto?total:elapsed();
   stopAll();say(auto?'Sesión completada. Buen trabajo.':'Sesión terminada.');
   let pts=A.pts;if(pts.length>600){const st=pts.length/600;pts=Array.from({length:600},(_,i)=>pts[Math.floor(i*st)])}
-  const e={id:Date.now(),date:iso(new Date()),key:A.key,title:A.title,dur:Math.round(el),dist:Math.round(A.dist),kcal:Math.round(A.kcal),pts:pts,feel:''};
+  const e={id:Date.now(),date:iso(new Date()),key:A.key,title:A.title,dur:Math.round(el),dist:Math.round(A.dist),kcal:Math.round(A.kcal),pts:pts,feel:'',wk:A.wk,splits:(A.free||!A.sd)?[]:A.segs.map((s,i)=>{const st=i?A.ends[i-1]:0;return {t:s.t,s:Math.round(Math.min(A.ends[i],el)-st),d:Math.round(A.sd[i])}}).filter(x=>x.s>0)};
   const full=/^w\d/.test(A.key)&&(auto||el>=total*.8);
   if(el>=60){hist.unshift(e);if(!LS.set('run_hist',hist)){hist.forEach((h,i)=>{if(i>30)h.pts=[]});LS.set('run_hist',hist)}}
   if(full){done[A.key]=1;LS.set('run_done',done)}
@@ -261,11 +261,22 @@ function finish(auto){
   if(el>=60)summary(e,full);
 }
 function summary(e,full){
-  modal('<h2>'+esc(e.title)+(full?' ✅':'')+'</h2>'+statsHtml(e)+routeSvg(e.pts)+
+  modal('<h2>'+esc(e.title)+(full?' ✅':'')+'</h2>'+statsHtml(e)+routeSvg(e.pts)+splitsHtml(e)+
    '<p class="mu sm" style="margin-top:12px">¿Cómo ha ido?</p><div class="row feel"><button data-f="Fácil">😀 Fácil</button><button data-f="Bien">🙂 Bien</button><button data-f="Duro">😓 Duro</button><button data-f="Dolor">🤕 Dolor</button></div><div id="feelMsg" class="sm"></div><button class="wide" style="margin-top:12px" onclick="closeModal()">Cerrar</button>');
   document.querySelectorAll('.feel button').forEach(b=>b.onclick=()=>{e.feel=b.dataset.f;LS.set('run_hist',hist);
     $('#feelMsg').innerHTML='<p>'+({Fácil:'Bien. No subas el ritmo: sigue el plan, la progresión ya está calculada.',Bien:'Justo donde hay que estar.',Duro:'Si la anterior también fue dura, repite este bloque antes de avanzar (en Plan, desmarca sus sesiones).',Dolor:'<b>Para.</b> 2–3 días sin trotar (andar sí, si no duele). Si es un dolor punzante, localizado o te cambia la pisada, fisio antes de seguir. Después, repite el bloque.'}[e.feel])+'</p>'});
 }
+function splitsHtml(e){
+  if(!e.splits||!e.splits.length)return '';
+  const tg=targets(e.wk||1,cfg.off),pj=x=>x.d>=30?x.s/(x.d/1000):null;
+  const js=e.splits.filter(x=>x.t==='j'&&x.s>=45).map(pj).filter(Boolean);
+  let h='',nj=0,nw=0;
+  if(js.length>=3){const k=Math.max(1,Math.floor(js.length/3)),avg=a=>a.reduce((s,v)=>s+v,0)/a.length,f=avg(js.slice(0,k)),l=avg(js.slice(-k)),dif=(l/f-1)*100;
+    h+='<p class="sm">Trotes: primeros <b class="num">'+pace(f)+'</b> · últimos <b class="num">'+pace(l)+'</b> /km. '+(dif>8?'<b style="color:var(--bad)">Te caes un '+Math.round(dif)+' % al final:</b> sal más despacio; si se repite, repite el bloque.':dif<-8?'Acabas más rápido de lo que empiezas: no aprietes al final.':'<b style="color:var(--ok)">Ritmo estable.</b>')+'</p>'}
+  h+='<details><summary><b class="grow">Ver tramos ('+e.splits.length+')</b>▾</summary><div style="padding:0 14px 10px" class="sm num">'+e.splits.map(x=>{const p=pj(x),j=x.t==='j',c=!j||!p?'inherit':p<tg.j[0]?'var(--bad)':p>tg.j[1]?'var(--walk)':'var(--ok)';
+    return '<div class="row" style="padding:5px 0;border-top:1px solid var(--line)"><span class="grow" style="color:'+(j?'var(--jog)':'var(--walk)')+'">'+(j?'Trote '+(++nj):'Andar '+(++nw))+'</span><span>'+mmss(x.s)+'</span><span style="width:64px;text-align:right">'+x.d+' m</span><b style="width:54px;text-align:right;color:'+c+'">'+pace(p)+'</b></div>'}).join('')+
+    '<p class="mu">Ritmo de los trotes: verde = en objetivo, rojo = demasiado rápido, azul = lento. En tramos de 1–2 min el GPS tiene un error de ±10–15 %.</p></div></details>';
+  return h}
 function statsHtml(e){return '<div class="grid" style="margin:10px 0"><div class="st"><span>Tiempo</span><b>'+mmss(e.dur)+'</b></div><div class="st"><span>Distancia km</span><b>'+km(e.dist)+'</b></div><div class="st"><span>Ritmo medio</span><b>'+(e.dist>50?pace(e.dur/(e.dist/1000)):'--')+'</b></div><div class="st"><span>Kcal (estim.)</span><b>'+e.kcal+'</b></div></div>'}
 
 $('#bPause').onclick=()=>{if(!A)return;if(A.pausedAt){A.pausedTotal+=Date.now()-A.pausedAt;A.pausedAt=null;R.last=null;R.win=[];$('#bPause').textContent='⏸ Pausa';say('Seguimos')}else{A.pausedAt=Date.now();$('#bPause').textContent='▶ Seguir';say('Pausa')}persist();tick()};
@@ -337,7 +348,7 @@ function vHist(){
   document.querySelectorAll('[data-id]').forEach(c=>c.onclick=()=>detail(hist.find(e=>e.id==c.dataset.id)));
 }
 function detail(e){
-  modal('<h2>'+esc(e.title)+' · '+dm(pd(e.date))+'</h2>'+statsHtml(e)+'<div id="map">'+routeSvg(e.pts)+'</div><div class="row" style="margin-top:12px"><button class="grow" onclick="closeModal()">Cerrar</button><button class="dan" id="bDel">Borrar</button></div>');
+  modal('<h2>'+esc(e.title)+' · '+dm(pd(e.date))+'</h2>'+statsHtml(e)+'<div id="map">'+routeSvg(e.pts)+'</div>'+splitsHtml(e)+'<div class="row" style="margin-top:12px"><button class="grow" onclick="closeModal()">Cerrar</button><button class="dan" id="bDel">Borrar</button></div>');
   let tap=0;$('#bDel').onclick=()=>{if(Date.now()-tap<3000){hist=hist.filter(x=>x.id!==e.id);LS.set('run_hist',hist);closeModal();render()}else{tap=Date.now();$('#bDel').textContent='¿Seguro?'}};
   if(navigator.onLine&&e.pts.length>1)leaflet().then(()=>{const el=$('#map');if(!el)return;el.innerHTML='';const m=L.map(el,{attributionControl:true});L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(m);const p=L.polyline(e.pts,{color:'#65a30d',weight:5}).addTo(m);m.fitBounds(p.getBounds(),{padding:[16,16]})}).catch(()=>{});
 }
@@ -351,7 +362,7 @@ function vCfg(){
   '<div class="card"><h2>Ritmo y avisos</h2><label>Ajuste de ritmo objetivo (segundos por km; positivo = más lento)</label><input type="number" step="5" id="cOff" value="'+cfg.off+'"><div class="row" style="margin-top:12px"><input type="checkbox" id="cVoice"'+(cfg.voice?' checked':'')+'><span class="grow">Avisos de voz</span><button id="bTest">Probar voz</button></div><div class="row" style="margin-top:12px"><input type="checkbox" id="cVib"'+(cfg.vib?' checked':'')+'><span class="grow">Vibración en cada cambio</span></div></div>'+
   '<div class="card"><h2>Spotify</h2><label>Enlace de tu playlist (Spotify → Compartir → Copiar enlace)</label><input type="url" id="cSpo" placeholder="https://open.spotify.com/playlist/…" value="'+esc(cfg.spotify)+'"><p class="sm mu">La música suena en la app de Spotify; los avisos de voz suenan por encima.</p></div>'+
   '<div class="card"><h2>Copia de seguridad</h2><p class="sm mu">Los datos solo están en este móvil. Exporta de vez en cuando.</p><div class="row"><button class="grow" id="bExp">Exportar</button><button class="grow" id="bImp">Importar</button></div><input type="file" id="fImp" accept="application/json" style="display:none"></div>'+
-  '<p class="sm mu" style="text-align:center">v1.3 · Mantén la pantalla encendida durante la sesión: con la pantalla apagada el navegador corta el GPS.</p>';
+  '<p class="sm mu" style="text-align:center">v1.4 · Mantén la pantalla encendida durante la sesión: con la pantalla apagada el navegador corta el GPS.</p>';
   const sv=()=>{LS.set('run_cfg',cfg)};
   $('#cRace').onchange=e=>{if(e.target.value){cfg.race=e.target.value;sv();render()}};
   $('#cOff').onchange=e=>{cfg.off=Math.max(-120,Math.min(240,+e.target.value||0));sv()};
