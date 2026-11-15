@@ -1,7 +1,7 @@
 {
   "name": "Maratón 6h",
   "short_name": "Maratón",
-  "description": "Plan de 42 semanas andar-trotar con GPS y avisos de voz",
+  "description": "Plan andar-trotar de 168 sesiones con GPS y avisos de voz",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

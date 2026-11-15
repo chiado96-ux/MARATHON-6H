@@ -141,8 +141,7 @@ const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth()
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const dm=d=>d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
 const days=(a,b)=>Math.round((b-a)/DAY);
-function curWeek(){const n=Math.floor(days(pd(cfg.start),today())/7)+1;return Math.max(1,Math.min(PLAN_WEEKS,n))}
-function margin(){const last=new Date(pd(cfg.start).getTime()+(PLAN_WEEKS-1)*7*DAY);return Math.floor(days(last,pd(cfg.race))/7)}
+function curWeek(){for(let n=1;n<=PLAN_WEEKS;n++)for(let i=0;i<4;i++)if(!done['w'+n+'s'+i])return n;return PLAN_WEEKS}
 const mmss=s=>{s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=String(s%60).padStart(2,'0');return h?h+':'+String(m).padStart(2,'0')+':'+x:m+':'+x};
 const pace=p=>(!p||p>1800)?'--':Math.floor(p/60)+':'+String(Math.round(p%60)).padStart(2,'0');
 const km=m=>(m/1000).toFixed(2).replace('.',',');
@@ -257,7 +256,7 @@ function summary(e,full){
   modal('<h2>'+esc(e.title)+(full?' ✅':'')+'</h2>'+statsHtml(e)+routeSvg(e.pts)+
    '<p class="mu sm" style="margin-top:12px">¿Cómo ha ido?</p><div class="row feel"><button data-f="Fácil">😀 Fácil</button><button data-f="Bien">🙂 Bien</button><button data-f="Duro">😓 Duro</button><button data-f="Dolor">🤕 Dolor</button></div><div id="feelMsg" class="sm"></div><button class="wide" style="margin-top:12px" onclick="closeModal()">Cerrar</button>');
   document.querySelectorAll('.feel button').forEach(b=>b.onclick=()=>{e.feel=b.dataset.f;LS.set('run_hist',hist);
-    $('#feelMsg').innerHTML='<p>'+({Fácil:'Bien. No subas el ritmo: sigue el plan, la progresión ya está calculada.',Bien:'Justo donde hay que estar.',Duro:'Si la anterior también fue dura, repite esta semana (Ajustes → Repetir semana) antes de avanzar.',Dolor:'<b>Para.</b> 2–3 días sin trotar (andar sí, si no duele). Si es un dolor punzante, localizado o te cambia la pisada, fisio antes de seguir. Después, repite la semana.'}[e.feel])+'</p>'});
+    $('#feelMsg').innerHTML='<p>'+({Fácil:'Bien. No subas el ritmo: sigue el plan, la progresión ya está calculada.',Bien:'Justo donde hay que estar.',Duro:'Si la anterior también fue dura, repite este bloque antes de avanzar (en Plan, desmarca sus sesiones).',Dolor:'<b>Para.</b> 2–3 días sin trotar (andar sí, si no duele). Si es un dolor punzante, localizado o te cambia la pisada, fisio antes de seguir. Después, repite el bloque.'}[e.feel])+'</p>'});
 }
 function statsHtml(e){return '<div class="grid" style="margin:10px 0"><div class="st"><span>Tiempo</span><b>'+mmss(e.dur)+'</b></div><div class="st"><span>Distancia km</span><b>'+km(e.dist)+'</b></div><div class="st"><span>Ritmo medio</span><b>'+(e.dist>50?pace(e.dur/(e.dist/1000)):'--')+'</b></div><div class="st"><span>Kcal (estim.)</span><b>'+e.kcal+'</b></div></div>'}
 
@@ -276,27 +275,33 @@ $('#modal').onclick=e=>{if(e.target.id==='modal')closeModal()};
 function nextSession(n){const w=weekPlan(n);for(let i=0;i<4;i++)if(!done['w'+n+'s'+i])return {i:i,s:w[i]};return null}
 function sesLine(s,n){return sesMin(s)+' min · ≈ '+sesKm(s,n).toFixed(1).replace('.',',')+' km'}
 function vHoy(){
-  const n=curWeek(),st=pd(cfg.start),pre=days(today(),st),nx=nextSession(n),dn=[0,1,2,3].filter(i=>done['w'+n+'s'+i]).length,m=margin(),t=targets(n,cfg.off);
-  let h='<h1>Semana '+n+' de '+PLAN_WEEKS+'</h1><div class="mu sm">Fase '+phase(n)+': '+PHASES[phase(n)]+' · faltan '+Math.max(0,days(today(),pd(cfg.race)))+' días para la maratón</div>';
+  const n=curWeek(),nx=nextSession(n),dc=Object.keys(done).length,tot=PLAN_WEEKS*4,rem=Math.max(0,tot-dc),dr=Math.max(0,days(today(),pd(cfg.race))),t=targets(n,cfg.off);
+  const dn=[0,1,2,3].filter(i=>done['w'+n+'s'+i]).length;
+  let h='<h1>Bloque '+n+' de '+PLAN_WEEKS+'</h1><div class="mu sm">Fase '+phase(n)+': '+PHASES[phase(n)]+' · sesión '+Math.min(dc+1,tot)+' de '+tot+' · faltan '+dr+' días para la maratón</div>';
   if(A)h+='<div class="card" style="border-color:var(--jog)"><b>Tienes una sesión a medias</b> ('+esc(A.title)+', '+mmss(A.lastEl)+')<div class="row" style="margin-top:10px"><button class="grow" id="bRes">Reanudar</button><button class="dan" id="bDis">Descartar</button></div></div>';
-  if(pre>0)h+='<div class="card">El plan empieza el <b>'+dm(st)+'</b> (en '+pre+' días). Puedes adelantar la fecha en Ajustes o empezar ya.</div>';
-  h+='<div class="card"><div class="row"><div class="grow"><span class="tag">Esta semana: '+dn+'/4</span></div></div><div class="bar" style="margin:10px 0"><i style="width:'+dn*25+'%"></i></div>';
+  const w7=hist.filter(e=>e.key!=='libre'&&days(pd(e.date),today())<7).length,ll=hist.find(e=>/s3$/.test(e.key));
+  if(w7>=5)h+='<div class="card sm" style="border-color:var(--bad)"><b>Llevas '+w7+' sesiones del plan en 7 días.</b> Cuentan, pero tendones y articulaciones se adaptan más despacio que el fondo: mete un día de descanso antes de la siguiente.</div>';
+  if(nx&&nx.i===3&&n>12&&ll&&days(pd(ll.date),today())<5)h+='<div class="card sm" style="border-color:var(--bad)"><b>Tu última tirada larga fue hace menos de 5 días.</b> Espera antes de hacer esta.</div>';
+  h+='<div class="card"><div class="row"><span class="tag">Este bloque: '+dn+'/4</span><span class="tag">Plan: '+Math.round(dc/tot*100)+'%</span></div><div class="bar" style="margin:10px 0"><i style="width:'+(dc/tot*100).toFixed(1)+'%"></i></div>';
   if(nx)h+='<h2 style="margin-top:12px">'+esc(nx.s.title)+'</h2><p>'+nx.s.desc+'</p><p class="mu sm">'+sesLine(nx.s,n)+(nx.s.note?'<br>'+nx.s.note:'')+'</p><p class="sm">Ritmo objetivo — trote <b class="num">'+pace(t.j[0])+'–'+pace(t.j[1])+'</b> · andar <b class="num">'+pace(t.w[0])+'–'+pace(t.w[1])+'</b> min/km</p><button class="pri" id="bGo">EMPEZAR</button>';
-  else h+='<p><b>Semana completada.</b> Si te apetece más, haz una sesión libre suave o una caminata. No adelantes sesiones de la semana siguiente.</p>';
-  h+='</div><div class="row"><button class="grow" id="bFree">Sesión libre</button><a class="btn spo grow" target="_blank" rel="noopener" href="'+esc(spoUrl())+'">♫ Abrir Spotify</a></div>';
-  h+='<div class="card sm '+(m<0?'':'mu')+'"'+(m<0?' style="border-color:var(--bad)"':'')+'>'+(m<0?'<b>El plan termina '+(-m)+' semana(s) después de la maratón.</b> Revisa las fechas en Ajustes.':(m===0?'<b>Sin semanas de margen:</b> el plan termina justo en la semana de la maratón. Si pierdes una semana, sigue donde toca; no intentes recuperarla doblando sesiones.':'Margen: <b>'+m+' semana(s)</b> entre el final del plan y la maratón, para repetir semanas duras o parones.')+(n>=35&&m>0?' <b>Úsalas ahora</b> (Ajustes → Repetir semana) para que la tirada más larga caiga 3 semanas antes de la carrera.':''))+'</div>';
+  else h+='<p><b>Plan completado.</b></p>';
+  h+='</div><div class="row"><button class="grow" id="bFree">Sesión libre (no avanza el plan)</button><a class="btn spo grow" target="_blank" rel="noopener" href="'+esc(spoUrl())+'">♫ Abrir Spotify</a></div>';
+  if(rem&&dr){const need=rem/(dr/7),end=new Date(today().getTime()+Math.ceil(rem/4*7)*DAY),late=need>4.3;
+    h+='<div class="card sm '+(late?'':'mu')+'"'+(late?' style="border-color:var(--bad)"':'')+'>Quedan <b>'+rem+' sesiones</b>. Para llegar a la maratón necesitas <b>'+need.toFixed(1).replace('.',',')+' por semana</b>; a 4 por semana terminarías el '+dm(end)+'.'+
+    (late?' <b>Vas justo.</b> No lo arregles haciendo 6 por semana: si no llegas, sáltate sesiones cortas, nunca las tiradas largas.':'')+
+    (n>=39&&dr>rem/4*7+10?' <b>Vas adelantado:</b> repite los bloques 37–38 (desmárcalos en Plan) hasta que falten 3 semanas, para que la tirada más larga no quede lejos de la carrera.':'')+'</div>'}
   $('#view').innerHTML=h;
   if(nx)$('#bGo').onclick=()=>begin(nx.s,'w'+n+'s'+nx.i,n);
   $('#bFree').onclick=()=>begin(null,'libre',n);
   if(A){$('#bRes').onclick=()=>{$('#bPause').textContent=A.pausedAt?'▶ Seguir':'⏸ Pausa';run()};$('#bDis').onclick=()=>{localStorage.removeItem('run_active');A=null;render()}}
 }
 function vPlan(){
-  const cur=curWeek(),st=pd(cfg.start);
-  let h='<h1>Plan de '+PLAN_WEEKS+' semanas</h1><div class="mu sm">4 sesiones por semana. Toca ○ para marcar una sesión hecha sin el móvil, ▶ para hacerla.</div>'+
+  const cur=curWeek();
+  let h='<h1>Plan: '+PLAN_WEEKS+' bloques · '+PLAN_WEEKS*4+' sesiones</h1><div class="mu sm">Avanzas sesión a sesión, a tu ritmo: cada sesión hecha cuenta, sea el día que sea. Toca ○ para marcar una hecha sin el móvil (o desmarcarla para repetirla), ▶ para hacerla.</div>'+
   '<details><summary><b class="grow">Reglas del plan (léelas una vez)</b>▾</summary><div style="padding:0 14px 12px" class="sm"><ul>'+
   '<li><b>Ritmo de conversación siempre.</b> Si no puedes decir una frase entera trotando, vas rápido. Ir despacio es lo que quema grasa y evita lesiones.</li>'+
-  '<li><b>Reparto:</b> 3 sesiones de 30–45 min + 1 larga. Deja un día de descanso antes de la larga. Nunca 3 días seguidos de trote.</li>'+
-  '<li><b>Semana dura = se repite.</b> Dolor punzante o que te cambia la pisada = parar.</li>'+
+  '<li><b>Cada bloque:</b> 3 sesiones de 30–45 min + 1 larga. El plan está calculado para 4 por semana. Si haces 5, cuenta y avanzas antes; más de 5 en 7 días no: el fondo mejora rápido, los tendones no.</li><li><b>Descanso:</b> al menos 1 día libre por semana, uno antes de cada tirada larga y 5 días o más entre dos largas.</li>'+
+  '<li><b>Bloque duro = se repite</b> (desmarca sus sesiones). Dolor punzante o que te cambia la pisada = parar.</li>'+
   '<li><b>Fuerza 2 días/semana, 15 min:</b> sentadilla, zancada, puente de glúteo, elevación de gemelos, plancha. Es lo que más protege rodillas y tendones.</li>'+
   '<li><b>Grasa:</b> la decide la alimentación, no los kilómetros. Déficit moderado (0,25–0,5 kg/semana); más rápido se paga en lesiones y fatiga. Proteína en cada comida. No recortes el día de la tirada larga.</li>'+
   '<li><b>Tiradas de más de 90 min:</b> agua y 30–60 g de hidratos por hora. Ensaya ahí lo que tomarás en carrera.</li>'+
@@ -304,8 +309,8 @@ function vPlan(){
   let ph=0;
   for(let n=1;n<=PLAN_WEEKS;n++){
     if(phase(n)!==ph){ph=phase(n);h+='<h2 style="margin:18px 0 4px">Fase '+ph+' · '+PHASES[ph]+'</h2>'}
-    const w=weekPlan(n),a=new Date(st.getTime()+(n-1)*7*DAY),dn=[0,1,2,3].filter(i=>done['w'+n+'s'+i]).length;
-    h+='<details'+(n===cur?' open class="cur"':'')+'><summary><b>S'+n+'</b><span class="grow mu sm">'+dm(a)+' · larga '+sesMin(w[3])+'\'</span><span class="tag">'+dn+'/4</span></summary>';
+    const w=weekPlan(n),dn=[0,1,2,3].filter(i=>done['w'+n+'s'+i]).length;
+    h+='<details'+(n===cur?' open class="cur"':'')+'><summary><b>Bloque '+n+'</b><span class="grow mu sm">'+w[0].desc.split(' · ')[1]+' · larga '+sesMin(w[3])+'\'</span><span class="tag">'+dn+'/4</span></summary>';
     w.forEach((s,i)=>{const k='w'+n+'s'+i;h+='<div class="ses"><button class="chk'+(done[k]?' on':'')+'" data-k="'+k+'">'+(done[k]?'✓':'○')+'</button><div class="grow"><b>'+esc(s.title)+'</b><div class="sm mu">'+s.desc+'<br>'+sesLine(s,n)+'</div></div><button class="go" data-n="'+n+'" data-i="'+i+'">▶</button></div>'});
     h+='</details>';
   }
@@ -330,23 +335,20 @@ function detail(e){
 let lfP=null;
 function leaflet(){if(window.L)return Promise.resolve();if(lfP)return lfP;lfP=new Promise((ok,ko)=>{const c=document.createElement('link');c.rel='stylesheet';c.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(c);const s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.onload=ok;s.onerror=()=>{lfP=null;ko()};document.head.appendChild(s)});return lfP}
 function vCfg(){
-  const end=new Date(pd(cfg.start).getTime()+(PLAN_WEEKS*7-1)*DAY);
-  let wl='';if(weights.length){const f=weights[0],l=weights[weights.length-1],d=l.kg-f.kg;wl='<p class="sm">Inicio '+f.kg+' kg ('+dm(pd(f.d))+') → ahora <b>'+l.kg+' kg</b> ('+(d>0?'+':'')+d.toFixed(1).replace('.',',')+' kg)</p><div class="sm mu">'+weights.slice(-6).reverse().map(w=>dm(pd(w.d))+': '+w.kg+' kg').join(' · ')+'</div>'}
+    let wl='';if(weights.length){const f=weights[0],l=weights[weights.length-1],d=l.kg-f.kg;wl='<p class="sm">Inicio '+f.kg+' kg ('+dm(pd(f.d))+') → ahora <b>'+l.kg+' kg</b> ('+(d>0?'+':'')+d.toFixed(1).replace('.',',')+' kg)</p><div class="sm mu">'+weights.slice(-6).reverse().map(w=>dm(pd(w.d))+': '+w.kg+' kg').join(' · ')+'</div>'}
   $('#view').innerHTML='<h1>Ajustes</h1>'+
-  '<div class="card"><h2>Plan</h2><label>Inicio del plan (lunes de la semana 1)</label><input type="date" id="cStart" value="'+cfg.start+'"><label>Fecha de la maratón</label><input type="date" id="cRace" value="'+cfg.race+'"><p class="sm mu">El plan termina el '+dm(end)+'. Margen: '+margin()+' semana(s).</p><button class="wide" id="bRep">Repetir semana (retrasa el plan 7 días)</button></div>'+
+  '<div class="card"><h2>Plan</h2><label>Fecha de la maratón</label><input type="date" id="cRace" value="'+cfg.race+'"><p class="sm mu">El plan avanza por sesiones hechas, no por fechas. Para repetir un bloque, desmarca sus sesiones en Plan.</p></div>'+
   '<div class="card"><h2>Peso</h2><label>Peso actual (kg) — se usa para las calorías</label><div class="row"><input type="number" step="0.1" inputmode="decimal" id="cKg" value="'+cfg.kg+'"><button id="bKg">Registrar</button></div>'+wl+'</div>'+
   '<div class="card"><h2>Ritmo y avisos</h2><label>Ajuste de ritmo objetivo (segundos por km; positivo = más lento)</label><input type="number" step="5" id="cOff" value="'+cfg.off+'"><div class="row" style="margin-top:12px"><input type="checkbox" id="cVoice"'+(cfg.voice?' checked':'')+'><span class="grow">Avisos de voz</span><button id="bTest">Probar voz</button></div><div class="row" style="margin-top:12px"><input type="checkbox" id="cVib"'+(cfg.vib?' checked':'')+'><span class="grow">Vibración en cada cambio</span></div></div>'+
   '<div class="card"><h2>Spotify</h2><label>Enlace de tu playlist (Spotify → Compartir → Copiar enlace)</label><input type="url" id="cSpo" placeholder="https://open.spotify.com/playlist/…" value="'+esc(cfg.spotify)+'"><p class="sm mu">La música suena en la app de Spotify; los avisos de voz suenan por encima.</p></div>'+
   '<div class="card"><h2>Copia de seguridad</h2><p class="sm mu">Los datos solo están en este móvil. Exporta de vez en cuando.</p><div class="row"><button class="grow" id="bExp">Exportar</button><button class="grow" id="bImp">Importar</button></div><input type="file" id="fImp" accept="application/json" style="display:none"></div>'+
-  '<p class="sm mu" style="text-align:center">v1.1 · Mantén la pantalla encendida durante la sesión: con la pantalla apagada el navegador corta el GPS.</p>';
+  '<p class="sm mu" style="text-align:center">v1.2 · Mantén la pantalla encendida durante la sesión: con la pantalla apagada el navegador corta el GPS.</p>';
   const sv=()=>{LS.set('run_cfg',cfg)};
-  $('#cStart').onchange=e=>{if(e.target.value){cfg.start=e.target.value;sv();render()}};
   $('#cRace').onchange=e=>{if(e.target.value){cfg.race=e.target.value;sv();render()}};
   $('#cOff').onchange=e=>{cfg.off=Math.max(-120,Math.min(240,+e.target.value||0));sv()};
   $('#cVoice').onchange=e=>{cfg.voice=e.target.checked;sv()};$('#cVib').onchange=e=>{cfg.vib=e.target.checked;sv()};
   $('#cSpo').onchange=e=>{cfg.spotify=e.target.value.trim();sv()};
   $('#bTest').onclick=()=>{beep(880,300);say('Trota un minuto. Aguanta este ritmo.')};
-  $('#bRep').onclick=()=>{cfg.start=iso(new Date(pd(cfg.start).getTime()+7*DAY));sv();render()};
   $('#bKg').onclick=()=>{const k=+$('#cKg').value;if(k>30&&k<250){cfg.kg=k;sv();const d=iso(today());weights=weights.filter(w=>w.d!==d);weights.push({d:d,kg:k});LS.set('run_w',weights);render()}};
   $('#bExp').onclick=()=>{const b=new Blob([JSON.stringify({cfg,done,hist,weights})],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='maraton-copia-'+iso(today())+'.json';a.click()};
   $('#bImp').onclick=()=>$('#fImp').click();
