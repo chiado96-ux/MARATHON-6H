@@ -59,6 +59,18 @@ input[type=checkbox]{width:22px;height:22px}
 svg.rt{width:100%;height:170px;background:#0e141b;border-radius:12px}
 #map{height:260px;border-radius:12px;overflow:hidden;background:#0e141b}
 .feel button{flex:1;padding:12px 4px;font-size:14px}
+#cover{position:fixed;inset:0;z-index:50;background:#070b10;display:flex;flex-direction:column;overflow:hidden;transition:opacity .35s}
+#cover svg{position:absolute;left:0;bottom:0;width:100%;height:62%}
+#cover .in{position:relative;display:flex;flex-direction:column;height:100%;padding:calc(34px + env(safe-area-inset-top)) 26px calc(26px + env(safe-area-inset-bottom))}
+#cover .k{font-size:12px;letter-spacing:.32em;color:var(--ac);font-weight:700}
+#cover .big{font-size:86px;font-weight:900;line-height:.92;letter-spacing:-.03em;margin:14px 0 0}
+#cover .big small{display:block;font-size:22px;letter-spacing:.02em;font-weight:600;color:var(--mu);margin-top:10px}
+#cover .goal{margin-top:16px;font-size:17px;line-height:1.4;max-width:300px}
+#cover .st3{display:flex;gap:10px;margin-top:auto}
+#cover .st3 div{flex:1;background:rgba(7,11,16,.72);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#cover .st3 b{display:block;font-size:26px;font-variant-numeric:tabular-nums}
+#cover .st3 span{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}
+#cover button{margin-top:14px}
 ul{padding-left:20px;margin:6px 0}li{margin:5px 0;line-height:1.4}
 </style>
 </head>
@@ -95,6 +107,23 @@ ul{padding-left:20px;margin:6px 0}li{margin:5px 0;line-height:1.4}
   </div>
 </section>
 <div id="lock"><div><b>Pantalla bloqueada</b><br><span class="sm mu">Mantén pulsado 2 segundos para desbloquear</span></div></div>
+<div id="cover"><svg viewBox="0 0 360 420" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070b10" stop-opacity="0"/><stop offset=".45" stop-color="#0e1820"/><stop offset="1" stop-color="#1a2a1c"/></linearGradient>
+<radialGradient id="cs" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fb923c"/><stop offset=".55" stop-color="#fb923c" stop-opacity=".25"/><stop offset="1" stop-color="#fb923c" stop-opacity="0"/></radialGradient></defs>
+<rect width="360" height="420" fill="url(#cg)"/>
+<circle cx="248" cy="150" r="92" fill="url(#cs)"/><circle cx="248" cy="150" r="30" fill="#fdba74"/>
+<path d="M0 190 Q60 150 130 176 T260 160 T360 178 V420 H0Z" fill="#16303a"/>
+<path d="M0 232 Q90 188 180 220 T360 206 V420 H0Z" fill="#17402f"/>
+<path d="M0 286 Q110 236 210 268 T360 252 V420 H0Z" fill="#1c5230"/>
+<g stroke="#2f7a3d" stroke-width="2" opacity=".7"><path d="M10 300 L70 420M50 286 L130 420M250 270 L330 420M300 262 L360 372M-20 330 L20 420"/></g>
+<path d="M118 420 C150 350 232 330 214 290 C202 262 172 258 186 236 C194 224 204 220 208 214 L212 214 C210 222 202 228 198 238 C190 258 226 262 240 292 C262 338 236 362 250 420Z" fill="#0b0f14"/>
+<path d="M184 420 C196 356 246 332 226 291 C212 262 180 258 197 236 C202 228 207 222 210 215" fill="none" stroke="#a3e635" stroke-width="3" stroke-dasharray="10 9" stroke-linecap="round"/>
+<circle cx="210" cy="214" r="5" fill="#a3e635"/></svg>
+<div class="in"><div class="k">ANDAR · TROTAR · LLEGAR</div>
+<div class="big">42,195<small>kilómetros · en menos de 6 h 30</small></div>
+<div class="goal" id="cvGoal"></div>
+<div class="st3"><div><b id="cvD">–</b><span>días</span></div><div><b id="cvS">–</b><span>sesiones hechas</span></div><div><b id="cvP">–</b><span>del plan</span></div></div>
+<button class="pri" id="cvGo">ENTRAR</button></div></div>
 <div id="modal"><div id="modalIn"></div></div>
 
 <script>
@@ -362,7 +391,7 @@ function vCfg(){
   '<div class="card"><h2>Ritmo y avisos</h2><label>Ajuste de ritmo objetivo (segundos por km; positivo = más lento)</label><input type="number" step="5" id="cOff" value="'+cfg.off+'"><div class="row" style="margin-top:12px"><input type="checkbox" id="cVoice"'+(cfg.voice?' checked':'')+'><span class="grow">Avisos de voz</span><button id="bTest">Probar voz</button></div><div class="row" style="margin-top:12px"><input type="checkbox" id="cVib"'+(cfg.vib?' checked':'')+'><span class="grow">Vibración en cada cambio</span></div></div>'+
   '<div class="card"><h2>Spotify</h2><label>Enlace de tu playlist (Spotify → Compartir → Copiar enlace)</label><input type="url" id="cSpo" placeholder="https://open.spotify.com/playlist/…" value="'+esc(cfg.spotify)+'"><p class="sm mu">La música suena en la app de Spotify; los avisos de voz suenan por encima.</p></div>'+
   '<div class="card"><h2>Copia de seguridad</h2><p class="sm mu">Los datos solo están en este móvil. Exporta de vez en cuando.</p><div class="row"><button class="grow" id="bExp">Exportar</button><button class="grow" id="bImp">Importar</button></div><input type="file" id="fImp" accept="application/json" style="display:none"></div>'+
-  '<p class="sm mu" style="text-align:center">v1.4 · Mantén la pantalla encendida durante la sesión: con la pantalla apagada el navegador corta el GPS.</p>';
+  '<p class="sm mu" style="text-align:center">v1.5 · Mantén la pantalla encendida durante la sesión: con la pantalla apagada el navegador corta el GPS.</p>';
   const sv=()=>{LS.set('run_cfg',cfg)};
   $('#cRace').onchange=e=>{if(e.target.value){cfg.race=e.target.value;sv();render()}};
   $('#cOff').onchange=e=>{cfg.off=Math.max(-120,Math.min(240,+e.target.value||0));sv()};
@@ -379,6 +408,10 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.
 
 /* ---------- arranque ---------- */
 (function(){const a=LS.get('run_active',null);if(a&&a.startTs&&Date.now()-a.startTs<8*3600e3)A=a;else localStorage.removeItem('run_active')})();
+(function(){const dc=Object.keys(done).length,tot=PLAN_WEEKS*4,r=pd(cfg.race),dr=Math.max(0,days(today(),r));
+  $('#cvD').textContent=dr;$('#cvS').textContent=dc;$('#cvP').textContent=Math.round(dc/tot*100)+'%';
+  $('#cvGoal').innerHTML='Maratón el <b>'+r.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})+'</b>.<br>'+(dc?'Bloque '+curWeek()+' de '+PLAN_WEEKS+'. Hoy toca la siguiente.':'Todo empieza con 5 minutos andando.');
+  $('#cvGo').onclick=()=>{const c=$('#cover');c.style.opacity=0;setTimeout(()=>{c.style.display='none'},350)}})();
 render();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
